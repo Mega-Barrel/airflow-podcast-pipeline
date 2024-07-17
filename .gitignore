@@ -1,0 +1,9 @@
+
+# env folder
+airflow-env
+
+# pycache folders
+__pycache__
+
+# environment variable file
+.env
