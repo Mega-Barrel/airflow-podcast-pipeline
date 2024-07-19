@@ -1,5 +1,6 @@
 """ Python code which contains Extract task."""
 
+import re
 import requests
 import xmltodict
 
@@ -39,7 +40,7 @@ class PodcastTransformer:
                 "episode_type": episode["itunes:episodeType"],
                 "author": episode["itunes:author"],
                 "published_date": episode["pubDate"],
-                "description": episode["description"],
+                "clean_description": self.clean_description(description=episode["description"]),
                 "is_explicit": episode["itunes:explicit"],
                 "podcast_url": episode["enclosure"]["@url"],
                 "podcast_type": episode["enclosure"]["@type"],
@@ -48,8 +49,18 @@ class PodcastTransformer:
                 "podcast_id": episode["post-id"]["#text"]
             }
             self._episode_data.append(epi_dict)
+            # TODO: push data to queue to be inserted.
 
-    # def clean_podcast_description(self, description) -> str:
+    def clean_description(self, description) -> str:
+        """Method to clean HTML contents using regex"""
+        if description is not None:
+            # Remove HTML tags using regex
+            clean_text = re.sub(r'<.*?>', '', description)
+            # Replace HTML character references with their corresponding characters
+            clean_text = re.sub(r'&#(\d+);', lambda x: chr(int(x.group(1))), clean_text)
+            clean_text = re.sub(r'&(#x[\da-fA-F]+);', lambda x: chr(int(x.group(1)[2:], 16)), clean_text)
+            clean_text = re.sub(r'&(\w+);', '', clean_text)  # Remove named entities
+            return clean_text
 
 ps = PodcastScraper()
 pt = PodcastTransformer()
