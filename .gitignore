@@ -7,3 +7,9 @@ __pycache__
 
 # environment variable file
 .env
+
+# airflow logs
+logs
+
+# airflow plugins
+plugins
