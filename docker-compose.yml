@@ -2,7 +2,8 @@ version: '3'
 
 x-airflow-common:
   &airflow-common
-  image: apache/airflow:latest
+  build: ./airflow  # This will use the Dockerfile in the ./airflow directory
+  image: custom-airflow:latest
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -18,7 +19,6 @@ x-airflow-common:
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
-  command: pip3 install  -r requirements.txt
   depends_on:
     redis:
       condition: service_healthy
@@ -26,7 +26,6 @@ x-airflow-common:
       condition: service_healthy
 
 services:
-
   postgres:
     image: postgres:13
     environment:
