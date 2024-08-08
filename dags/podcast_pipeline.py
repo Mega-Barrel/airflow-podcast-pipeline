@@ -37,24 +37,31 @@ def podcast_summary():
         response = requests.get(podcast_url + podcast_category, timeout=500)
 
         if response.status_code == 200:
-            print(response.text)
-            # return xmltodict.parse(response.text)
-        return f'Error occured while fetching data. More info on the error {response.status_code} - {response.text}'
+            return xmltodict.parse(response.text)
+        else:
+            return f'Error occured while fetching data. More info on the error {response.status_code} - {response}'
 
-    # def transformd_data(response):
-    #     items = response["rss"]["channel"]["item"]
-    #     for item in items:
-    #         description = item['description']
-    #         if description is not None:
-    #             # Remove HTML tags using regex
-    #             clean_text = re.sub(r'<.*?>', '', description)
-    #             # Replace HTML character references with their corresponding characters
-    #             clean_text = re.sub(r'&#(\d+);', lambda x: chr(int(x.group(1))), clean_text)
-    #             clean_text = re.sub(r'&(#x[\da-fA-F]+);', lambda x: chr(int(x.group(1)[2:], 16)), clean_text)
-    #             clean_text = re.sub(r'&(\w+);', '', clean_text)
-    #             print(clean_text)
+    @task
+    def transformd_data(response):
+        items = response["rss"]["channel"]["item"]
+        for item in items:
+            epi_dict = {
+                "title": item["title"],
+                "page_link": item["link"],
+                "episode_type": item["itunes:episodeType"],
+                "author": item["itunes:author"],
+                "published_date": item["pubDate"],
+                "clean_description": item["description"],
+                "is_explicit": item["itunes:explicit"],
+                "podcast_url": item["enclosure"]["@url"],
+                "podcast_type": item["enclosure"]["@type"],
+                "podcast_length": item["enclosure"]["@length"],
+                "podcast_duration": item["itunes:duration"],
+                "podcast_id": item["post-id"]["#text"]
+            }
+            print(epi_dict)
 
     raw_data = extract_data()
-    # transformd_data(raw_data)
+    transformd_data(response=raw_data)
 
 podcast_summary()
