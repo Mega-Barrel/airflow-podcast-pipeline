@@ -1,13 +1,14 @@
 """ Airflow Podcast ETL DAG"""
 # system import
 # import os
-import re
+# import re
 # import json
 
 import requests
 import xmltodict
 
 # airflow import
+import pandas as pd
 from airflow.decorators import task, dag
 from airflow.utils.dates import days_ago
 # from airflow.operators.empty import EmptyOperator
@@ -39,10 +40,10 @@ def podcast_summary():
         if response.status_code == 200:
             return xmltodict.parse(response.text)
         else:
-            return f'Error occured while fetching data. More info on the error {response.status_code} - {response}'
+            return f'Error occured while fetching data. More info on error {response.status_code} - {response}'
 
     @task
-    def transformd_data(response):
+    def transformd_data(response, data):
         items = response["rss"]["channel"]["item"]
         for item in items:
             epi_dict = {
@@ -59,9 +60,17 @@ def podcast_summary():
                 "podcast_duration": item["itunes:duration"],
                 "podcast_id": item["post-id"]["#text"]
             }
-            print(epi_dict)
+            data.append(epi_dict)
+        return data
 
+    @task
+    def save_to_csv(data):
+        df = pd.DataFrame(data)
+        df.to_csv('./data/podcast_summary.csv', index=False)
+
+    data = []
     raw_data = extract_data()
-    transformd_data(response=raw_data)
+    clean_data = transformd_data(response=raw_data, data=data)
+    save_to_csv(clean_data)
 
 podcast_summary()
